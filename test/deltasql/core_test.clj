@@ -1,8 +1,12 @@
 (ns deltasql.core-test
   (:require [clojure.test :refer :all]
-            [deltasql.core :refer :all]))
+            [deltasql.core :refer :all]
+            [clojure.java.shell :as shell]))
 
-(deftest a-test
-  (parse "create table foo ( bar text )")
-  (testing "FIXME, I fail."
-    (is (= 1 1))))
+(defn run-diff [old, new]
+  ((shell/sh "diff" "-u" old new) :out))
+
+(deftest transform-test
+  (let [output (run-diff "test/samples/sql/create.sql" "test/samples/sql/create-altered.sql"),
+        diff-string (transform (clojure.string/split output #"\n"))]
+    (testing (is (= diff-string "CREATE TABLE foo ( bar text, baz text );")))))
